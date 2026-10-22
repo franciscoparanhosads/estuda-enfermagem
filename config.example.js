@@ -7,5 +7,8 @@
 //   supabaseAnonKey = Project Settings → API Keys → chave "anon public" (ou "publishable")
 window.SIMULADO_CONFIG = {
   supabaseUrl: '',
-  supabaseAnonKey: ''
+  supabaseAnonKey: '',
+  // Opcional: "Site Key" do Cloudflare Turnstile (CAPTCHA no login/cadastro).
+  // Preencha ANTES de ligar o CAPTCHA no Supabase (Authentication → Attack Protection).
+  turnstileSiteKey: ''
 };

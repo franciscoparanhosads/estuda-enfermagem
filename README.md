@@ -33,7 +33,11 @@ Todas as questões têm 5 alternativas e comentário explicando o gabarito.
 
 - **Front-end**: HTML, CSS e JavaScript puro (sem framework e sem etapa de build), em uma single-page application.
 - **Back-end**: [Supabase](https://supabase.com), com PostgreSQL, autenticação e API REST gerada automaticamente.
-- **Segurança**: Row Level Security (RLS) no PostgreSQL. Cada aluno só lê e grava o próprio histórico, e só administradores alteram questões. A chave pública do front-end não dá acesso além do que as políticas permitem.
+- **Segurança**:
+  - Row Level Security (RLS) e privilégios por coluna no PostgreSQL. Cada aluno só lê o próprio histórico, e a chave pública do front-end não dá acesso além do que as políticas permitem.
+  - **Gabarito oculto**: a alternativa correta e o comentário só são enviados ao aluno depois que ele faz a questão.
+  - **Correção no servidor**: a prova é corrigida por uma função `security definer` (`finalizar_prova`), que valida as questões, calcula a nota e grava o resultado. Não é possível gravar uma nota inventada.
+  - Limites anti-abuso (tamanho dos registros, provas por dia), funções exclusivas de administrador e CAPTCHA (Cloudflare Turnstile) opcional no login e no cadastro.
 - **Hospedagem**: Netlify.
 - **Modo local**: sem Supabase configurado, o site roda 100% no navegador (contas e histórico em `localStorage`), útil para desenvolvimento e uso offline.
 
@@ -46,6 +50,7 @@ questoes.js, banco/     # banco de questões em JS (fonte da carga inicial e do 
 supabase/schema.sql     # tabelas, gatilhos e políticas RLS
 supabase/gera-seed.js   # gera os arquivos SQL de carga a partir de banco/
 supabase/seed-*.sql     # carga inicial (textos + 510 questões)
+supabase/seguranca.sql  # gabarito oculto, correção no servidor, limites e funções de admin
 COMO-CONFIGURAR.md      # passo a passo de implantação
 ```
 

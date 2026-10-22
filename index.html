@@ -65,6 +65,8 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;
 const CFG = window.SIMULADO_CONFIG || {};
 const ONLINE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const TURNSTILE_JS = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const CAPTCHA = ONLINE && !!CFG.turnstileSiteKey;
 const LOCAL_FILES = ['questoes.js', 'banco/pt-sus.js', 'banco/tec-1.js', 'banco/tec-2.js', 'banco/enf-1.js', 'banco/enf-2.js'];
 const AREAS = { pt: 'Língua Portuguesa', sus: 'Legislação do SUS', esp: 'Conhecimentos Específicos' };
 const AREAS_DB = { pt: 'Português', sus: 'SUS', tec: 'Técnico', enf: 'Enfermeiro' };
@@ -87,6 +89,8 @@ const loadScript = src => new Promise((ok, fail) => { const s = document.createE
 let sb = null, ME = null, BANK = [], BY_ID = {}, TXT = {}, HIST = [], CUR = null;
 let ui = { view: 'loading', tab: 'in', cargo: 'tec' };
 let timerId = null;
+let captchaToken = null, cfWidget = null, turnstileP = null;
+const loadTurnstile = () => turnstileP || (turnstileP = loadScript(TURNSTILE_JS));
 
 // ======================= Acesso a dados =======================
 async function hash(s) {
@@ -127,12 +131,25 @@ const LocalAPI = {
     return { questoes: qs, textos: Object.assign({}, TEXTOS) };
   },
   async history() { return ls.get('simVR_hist_' + ME.id, []); },
-  async saveAttempt(a) {
+  // No modo local a correção é feita aqui; no online, pela função finalizar_prova do banco
+  async finalizar(p) {
+    const por = {}, resultado = {};
+    p.questoes.forEach(({ id }) => {
+      const q = BY_ID[id], a = areaOf(q), acertou = p.respostas[id] === q.c;
+      por[a] = por[a] || { a: 0, n: 0 }; por[a].n++;
+      if (acertou) por[a].a++;
+      resultado[id] = acertou;
+    });
+    const acertos = Object.values(por).reduce((t, x) => t + x.a, 0);
+    const reg = Object.assign({}, p, {
+      resultado, acertos, total: p.questoes.length, por_area: por, criada_em: new Date().toISOString(),
+      aprovado: p.modo === 'completo' ? acertos >= 35 && Object.values(por).every(x => x.a > 0) : null
+    });
     const h = ls.get('simVR_hist_' + ME.id, []);
-    a = Object.assign({ criada_em: new Date().toISOString() }, a);
-    h.push(a); ls.set('simVR_hist_' + ME.id, h);
-    return a;
-  }
+    h.push(reg); ls.set('simVR_hist_' + ME.id, h);
+    return reg;
+  },
+  async gabarito() { return []; }
 };
 
 // Modo online: Supabase (login real, banco de questões e histórico no servidor)
@@ -144,13 +161,16 @@ const traduz = e => {
     [/at least 6 characters/i, 'A senha precisa ter pelo menos 6 caracteres.'],
     [/Email not confirmed/i, 'Confirme seu e-mail pelo link que enviamos antes de entrar.'],
     [/valid email|invalid format/i, 'Digite um e-mail válido.'],
+    [/email rate limit/i, 'O cadastro está temporariamente indisponível (limite de e-mails do servidor). Tente mais tarde ou avise o administrador.'],
+    [/captcha/i, 'Confirme a verificação "não sou um robô" e tente de novo.'],
     [/rate limit|too many/i, 'Muitas tentativas. Aguarde alguns minutos.'],
     [/Failed to fetch|NetworkError/i, 'Sem conexão com o servidor. Verifique sua internet.']
   ];
   for (const [r, t] of map) if (r.test(m)) return new Error(t);
   return new Error(m);
 };
-const fromDb = r => ({ id: r.id, area: r.area, txt: r.texto_id, t: r.enunciado, o: r.alternativas, c: r.correta, e: r.comentario, ativa: r.ativa });
+// Para alunos, "correta" e "comentario" só chegam depois (meu_gabarito), para questões já feitas
+const fromDb = r => ({ id: r.id, area: r.area, txt: r.texto_id, t: r.enunciado, o: r.alternativas, c: r.correta ?? null, e: r.comentario ?? '', ativa: r.ativa });
 const toDb = q => ({ id: q.id, area: q.area, texto_id: q.txt || null, enunciado: q.t, alternativas: q.o, correta: q.c, comentario: q.e, ativa: q.ativa });
 const ok = ({ data, error }) => { if (error) throw traduz(error); return data; };
 
@@ -165,19 +185,20 @@ const OnlineAPI = {
     return { id: user.id, email: user.email, nome: (p && p.nome) || user.email, admin: !!(p && p.admin) };
   },
   async session() { const { data } = await sb.auth.getSession(); return data.session ? this.profile(data.session.user) : null; },
-  async signUp(email, senha, nome) {
-    const data = ok(await sb.auth.signUp({ email: email.trim(), password: senha, options: { data: { nome: nome.trim() }, emailRedirectTo: location.origin + location.pathname } }));
+  async signUp(email, senha, nome, captcha) {
+    const data = ok(await sb.auth.signUp({ email: email.trim(), password: senha, options: { data: { nome: nome.trim() }, emailRedirectTo: location.origin + location.pathname, captchaToken: captcha || undefined } }));
     if (!data.session) return { confirmar: true };
     return this.profile(data.user);
   },
-  async signIn(email, senha) { const data = ok(await sb.auth.signInWithPassword({ email: email.trim(), password: senha })); return this.profile(data.user); },
+  async signIn(email, senha, captcha) { const data = ok(await sb.auth.signInWithPassword({ email: email.trim(), password: senha, options: { captchaToken: captcha || undefined } })); return this.profile(data.user); },
   async signOut() { await sb.auth.signOut(); },
-  async resetSenha(email) { ok(await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname })); },
+  async resetSenha(email, captcha) { ok(await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname, captchaToken: captcha || undefined })); },
   async novaSenha(s) { ok(await sb.auth.updateUser({ password: s })); },
   async loadBank() {
     const qs = [];
     for (let de = 0; ; de += 1000) {
-      const page = ok(await sb.from('questoes').select('*').order('id').range(de, de + 999));
+      const req = ME.admin ? sb.rpc('admin_questoes') : sb.from('questoes').select('id,area,texto_id,enunciado,alternativas,ativa').order('id');
+      const page = ok(await req.range(de, de + 999));
       qs.push(...page);
       if (page.length < 1000) break;
     }
@@ -185,9 +206,12 @@ const OnlineAPI = {
     return { questoes: qs.map(fromDb), textos: Object.fromEntries(t.map(x => [x.id, x.conteudo])) };
   },
   async history() { return ok(await sb.from('tentativas').select('*').eq('user_id', ME.id).order('criada_em')); },
-  async saveAttempt(a) { return ok(await sb.from('tentativas').insert(a).select().single()); },
-  async saveQuestion(q) { ok(await sb.from('questoes').upsert(toDb(q))); },
-  async deleteQuestion(id) { ok(await sb.from('questoes').delete().eq('id', id)); },
+  async finalizar(p) {
+    return ok(await sb.rpc('finalizar_prova', { p_cargo: p.cargo, p_modo: p.modo, p_area: p.area, p_questoes: p.questoes, p_respostas: p.respostas, p_tempo: p.tempo }));
+  },
+  async gabarito() { return ok(await sb.rpc('meu_gabarito')); },
+  async saveQuestion(q) { ok(await sb.rpc('admin_salvar_questao', { q: toDb(q) })); },
+  async deleteQuestion(id) { ok(await sb.rpc('admin_excluir_questao', { p_id: id })); },
   async saveTexto(id, conteudo) { ok(await sb.from('textos').upsert({ id, conteudo })); },
   async alunos() {
     const perfis = ok(await sb.from('perfis').select('id,nome'));
@@ -201,12 +225,16 @@ async function carregar() {
   const b = await API.loadBank();
   BANK = b.questoes; TXT = b.textos;
   BY_ID = Object.fromEntries(BANK.map(q => [q.id, q]));
+  await aplicarGabarito();
   HIST = await API.history();
   ui.cargo = ls.get('simVR_cargo_' + ME.id, 'tec');
   CUR = ls.get('simVR_cur_' + ME.id, null);
   if (CUR) { CUR.ids = CUR.ids.filter(id => BY_ID[id]); if (!CUR.ids.length) CUR = null; }
 }
 const saveCur = () => CUR ? ls.set('simVR_cur_' + ME.id, CUR) : ls.del('simVR_cur_' + ME.id);
+async function aplicarGabarito() {
+  (await API.gabarito()).forEach(g => { const q = BY_ID[g.id]; if (q) { q.c = g.correta; q.e = g.comentario; } });
+}
 
 // ======================= Sorteio das provas =======================
 // last[id] = quando a questão apareceu por último; lastOk[id] = se acertou da última vez
@@ -214,7 +242,10 @@ function estat() {
   const last = {}, lastOk = {};
   HIST.forEach(h => {
     const t = Date.parse(h.criada_em) || 0;
-    h.questoes.forEach(x => { last[x.id] = t; lastOk[x.id] = !!BY_ID[x.id] && h.respostas[x.id] === BY_ID[x.id].c; });
+    h.questoes.forEach(x => {
+      last[x.id] = t;
+      lastOk[x.id] = h.resultado ? !!h.resultado[x.id] : !!BY_ID[x.id] && h.respostas[x.id] === BY_ID[x.id].c;
+    });
   });
   return { last, lastOk };
 }
@@ -267,12 +298,25 @@ function vLogin() {
       <label>${idLabel}</label><input id="u" ${ONLINE ? 'type="email" autocomplete="email"' : 'autocomplete="username" autocapitalize="none"'} required>
       ${rec ? '' : `<label>Senha</label><input id="p" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required>`}
       ${reg ? '<label>Confirmar senha</label><input id="p2" type="password" autocomplete="new-password" required>' : ''}
+      ${CAPTCHA ? '<div id="cf" style="margin-top:14px;min-height:65px"></div>' : ''}
       <div class="err" id="err"></div><div class="info" id="info"></div>
       <button class="pri full" style="margin-top:6px" id="sub">${rec ? 'Enviar link de recuperação' : reg ? 'Criar conta' : 'Entrar'}</button>
     </form>
     ${ONLINE ? (rec ? '<button class="link" data-t="in">Voltar ao login</button>' : '<button class="link" data-t="rec">Esqueci minha senha</button>') : '<p class="mut" style="margin-top:14px">Modo local: as contas e o histórico ficam salvos só neste aparelho.</p>'}
   </div>`;
   $$('[data-t]').forEach(b => b.onclick = () => { ui.tab = b.dataset.t; render(); });
+  // Verificação anti-robô (Cloudflare Turnstile), exigida pelo Supabase quando o CAPTCHA está ligado
+  captchaToken = null; cfWidget = null;
+  if (CAPTCHA) loadTurnstile().then(() => {
+    if (!$('#cf')) return;
+    cfWidget = turnstile.render('#cf', {
+      sitekey: CFG.turnstileSiteKey, language: 'pt-br',
+      callback: t => { captchaToken = t; },
+      'expired-callback': () => { captchaToken = null; },
+      'error-callback': () => { captchaToken = null; }
+    });
+  }).catch(() => { $('#err').textContent = 'Não foi possível carregar a verificação anti-robô. Recarregue a página.'; });
+  const novoCaptcha = () => { try { if (CAPTCHA && cfWidget !== null && $('#cf')) { turnstile.reset(cfWidget); captchaToken = null; } } catch (e) {} };
   $('#f').onsubmit = async ev => {
     ev.preventDefault();
     const err = $('#err'), info = $('#info'), sub = $('#sub');
@@ -280,14 +324,15 @@ function vLogin() {
     const u = $('#u').value, p = rec ? '' : $('#p').value;
     if (reg && p.length < 6) return err.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
     if (reg && p !== $('#p2').value) return err.textContent = 'As senhas não conferem.';
+    if (CAPTCHA && !captchaToken) return err.textContent = 'Confirme a verificação "não sou um robô".';
     sub.disabled = true;
     try {
-      if (rec) { await API.resetSenha(u); info.textContent = 'Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha.'; return; }
-      const r = reg ? await API.signUp(u, p, ONLINE ? $('#nome').value : u) : await API.signIn(u, p);
+      if (rec) { await API.resetSenha(u, captchaToken); info.textContent = 'Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha.'; return; }
+      const r = reg ? await API.signUp(u, p, ONLINE ? $('#nome').value : u, captchaToken) : await API.signIn(u, p, captchaToken);
       if (r && r.confirmar) { info.textContent = 'Conta criada! Abra o link que enviamos para o seu e-mail e depois entre aqui.'; ui.tab = 'in'; return; }
       ME = r; await carregar(); go('home');
     } catch (e) { err.textContent = traduz(e).message; }
-    finally { sub.disabled = false; }
+    finally { sub.disabled = false; novoCaptcha(); }
   };
 }
 
@@ -392,21 +437,14 @@ function vExam() {
 
 async function finish() {
   clearInterval(timerId);
-  const s = CUR, por = {};
-  s.ids.forEach(id => {
-    const q = BY_ID[id], a = areaOf(q);
-    por[a] = por[a] || { a: 0, n: 0 }; por[a].n++;
-    if (s.ans[id] === q.c) por[a].a++;
-  });
-  const acertos = Object.values(por).reduce((t, p) => t + p.a, 0);
-  const reg = {
+  const s = CUR;
+  const prova = {
     cargo: s.cargo, modo: s.modo, area: s.area,
-    questoes: s.ids.map(id => ({ id, ordem: s.ordem[id] })), respostas: s.ans,
-    acertos, total: s.ids.length, por_area: por, tempo: s.el,
-    aprovado: s.modo === 'completo' ? acertos >= 35 && Object.values(por).every(p => p.a > 0) : null
+    questoes: s.ids.map(id => ({ id, ordem: s.ordem[id] })), respostas: s.ans, tempo: s.el
   };
   try {
-    HIST.push(await API.saveAttempt(reg));
+    HIST.push(await API.finalizar(prova));
+    await aplicarGabarito();
     CUR = null; saveCur();
     go('result', { h: HIST.length - 1 });
   } catch (e) {
@@ -440,7 +478,7 @@ function vResult() {
 function vReview() {
   const h = HIST[ui.h];
   const list = h.questoes.map((x, k) => ({ q: BY_ID[x.id], ordem: x.ordem, k, a: h.respostas[x.id] }))
-    .filter(x => x.q && (!ui.wrong || x.a !== x.q.c));
+    .filter(x => x.q && (!ui.wrong || !(h.resultado ? h.resultado[x.q.id] : x.a === x.q.c)));
   $('#app').innerHTML = `
   <div class="top"><button id="back">← Resultado</button><b>${ui.wrong ? 'Erradas / em branco' : 'Gabarito comentado'}</b></div>
   ${list.length ? '' : '<div class="card">Nenhuma questão errada. Parabéns!</div>'}

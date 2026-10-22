@@ -18,6 +18,15 @@ No menu **SQL Editor** → **New query**, cole e rode (**Run**) um arquivo por v
 2. `supabase/seed-1-portugues-sus.sql` — textos + 60 Português + 60 SUS
 3. `supabase/seed-2-tecnico.sql` — 208 questões do Técnico
 4. `supabase/seed-3-enfermeiro.sql` — 182 questões do Enfermeiro
+5. `supabase/seguranca.sql` — reforço de segurança: gabarito oculto, correção no servidor e limites anti-abuso
+
+## 2.1 CAPTCHA no login e no cadastro (opcional, recomendado)
+
+1. Em https://dash.cloudflare.com, abra **Turnstile → Add widget**, informe o domínio do site (ex.: `estudaenfermagem.netlify.app`) e copie a **Site Key** e a **Secret Key**.
+2. Coloque a **Site Key** em `turnstileSiteKey` no `config.js` e publique o site de novo.
+3. Só depois disso, no Supabase, abra **Authentication → Attack Protection**, ligue **Enable Captcha protection**, escolha **Cloudflare Turnstile** e cole a **Secret Key**.
+
+Se você ligar no Supabase antes de publicar o site com a Site Key, ninguém consegue entrar.
 
 ## 3. Ajustar o login
 
