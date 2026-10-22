@@ -1,0 +1,13 @@
+# Configuração com a URL e a chave do Supabase (use config.example.js como modelo)
+config.js
+
+# Configuração local do Claude Code
+.claude/
+
+# Cópia gerada para arrastar no Netlify Drop
+site-publicar/
+
+# Sistema
+Thumbs.db
+.DS_Store
+node_modules/

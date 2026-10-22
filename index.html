@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Simulado VR">
+<meta name="theme-color" content="#0f766e">
+<title>Simulado Enfermagem VR</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--fg:#1a1d23;--mut:#5d6470;--bd:#dde1e7;--pri:#0f766e;--pri2:#0d5f59;--prifg:#fff;--sel:#e3f3f1;--ok:#15803d;--okbg:#e6f5eb;--bad:#b91c1c;--badbg:#fdecec;--warnbg:#fdf6e3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1b1f25;--fg:#e8eaed;--mut:#9aa3ad;--bd:#2d333b;--pri:#2bb3a6;--pri2:#25998e;--prifg:#06201d;--sel:#16332f;--ok:#4ade80;--okbg:#12291a;--bad:#f87171;--badbg:#2e1515;--warnbg:#2b250f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px}
+h1{font-size:1.35rem;margin:0 0 4px}h2{font-size:1.1rem;margin:0 0 12px}
+.mut{color:var(--mut);font-size:.9rem}
+label{display:block;font-size:.9rem;margin:12px 0 4px;color:var(--mut)}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg);font:inherit;font-size:16px}
+textarea{min-height:80px;resize:vertical}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:11px 14px}
+button.pri{background:var(--pri);border-color:var(--pri);color:var(--prifg);font-weight:600}
+button.pri:hover{background:var(--pri2)}
+button.link{border:0;background:none;color:var(--pri);padding:4px 0;text-decoration:underline}
+button.danger{color:var(--bad);border-color:var(--bad)}
+button:disabled{opacity:.45;cursor:default}
+.full{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+.tabs{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:12px;margin-bottom:6px}
+.tabs button{flex:1;border:0;background:transparent;padding:9px 6px}
+.tabs button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.err{color:var(--bad);font-size:.9rem;min-height:1.3em;margin-top:8px}
+.info{color:var(--ok);font-size:.9rem;margin-top:8px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.top>button{white-space:nowrap;flex:0 0 auto}
+.badge{display:inline-block;font-size:.75rem;padding:3px 8px;border-radius:99px;background:var(--sel);color:var(--pri);font-weight:600;white-space:nowrap}
+.badge.off{background:var(--badbg);color:var(--bad)}
+.texto{background:var(--bg);border-left:3px solid var(--pri);padding:10px 12px;border-radius:6px;font-size:.95rem;margin-bottom:12px}
+.opt{display:flex;gap:10px;width:100%;text-align:left;margin-top:8px;align-items:flex-start;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;background:var(--card)}
+.opt b{flex:0 0 26px;height:26px;border-radius:50%;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.opt.on{border-color:var(--pri);background:var(--sel)}.opt.on b{background:var(--pri);color:var(--prifg);border-color:var(--pri)}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;margin-top:10px}
+.grid button{padding:7px 0;font-size:.85rem}
+.grid .ans{background:var(--sel);border-color:var(--pri)}.grid .cur{outline:2px solid var(--pri)}
+.timer{font-variant-numeric:tabular-nums;font-weight:600}
+.big{font-size:2.4rem;font-weight:700;line-height:1.1}
+.res{padding:12px;border-radius:10px;margin:12px 0;font-weight:600}
+.res.ok{background:var(--okbg);color:var(--ok)}.res.bad{background:var(--badbg);color:var(--bad)}
+.bar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin:4px 0 10px}.bar i{display:block;height:100%;background:var(--pri)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;margin-top:8px}
+.coment{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--warnbg);font-size:.92rem}
+.nav{display:flex;gap:10px;margin-top:16px}.nav button{flex:1}
+.altrow{display:flex;gap:8px;align-items:center;margin-top:8px}.altrow input[type=radio]{width:22px;height:22px;flex:0 0 22px}
+.chk{display:flex;gap:8px;align-items:center;margin-top:12px}.chk input{width:20px;height:20px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--bd)}
+.tbl{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="card">Carregando…</div></div>
+<script src="config.js"></script>
+<script>
+const CFG = window.SIMULADO_CONFIG || {};
+const ONLINE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
+const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const LOCAL_FILES = ['questoes.js', 'banco/pt-sus.js', 'banco/tec-1.js', 'banco/tec-2.js', 'banco/enf-1.js', 'banco/enf-2.js'];
+const AREAS = { pt: 'Língua Portuguesa', sus: 'Legislação do SUS', esp: 'Conhecimentos Específicos' };
+const AREAS_DB = { pt: 'Português', sus: 'SUS', tec: 'Técnico', enf: 'Enfermeiro' };
+const CARGOS = { tec: 'Técnico em Enfermagem', enf: 'Enfermeiro' };
+const MODOS = { completo: 'Simulado completo', area: 'Treino por área', erradas: 'Treino das erradas' };
+const L = 'ABCDE';
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const fmt = s => { s = Math.floor(s || 0); return [s / 3600 | 0, (s % 3600) / 60 | 0, s % 60].map(n => String(n).padStart(2, '0')).join(':'); };
+const areaOf = q => (q.area === 'tec' || q.area === 'enf') ? 'esp' : q.area;
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+const loadScript = src => new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fail(new Error('Falha ao carregar ' + src)); document.head.appendChild(s); });
+
+let sb = null, ME = null, BANK = [], BY_ID = {}, TXT = {}, HIST = [], CUR = null;
+let ui = { view: 'loading', tab: 'in', cargo: 'tec' };
+let timerId = null;
+
+// ======================= Acesso a dados =======================
+async function hash(s) {
+  if (window.crypto && crypto.subtle) {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return 'f' + (h >>> 0).toString(16);
+}
+
+// Modo local: contas e histórico no navegador, questões dos arquivos .js
+const LocalAPI = {
+  async init() { for (const f of LOCAL_FILES) await loadScript(f); },
+  async session() { const u = ls.get('simVR_session'); return u && ls.get('simVR_users', {})[u] ? { id: u, nome: u, admin: false } : null; },
+  async signUp(login, senha) {
+    const users = ls.get('simVR_users', {});
+    login = login.trim().toLowerCase();
+    if (!/^[a-z0-9._-]{3,30}$/.test(login)) throw new Error('Usuário: 3 a 30 caracteres (letras, números, . _ -).');
+    if (users[login]) throw new Error('Esse usuário já existe.');
+    const salt = Math.random().toString(36).slice(2);
+    users[login] = { salt, hash: await hash(salt + senha) };
+    ls.set('simVR_users', users); ls.set('simVR_session', login);
+    return { id: login, nome: login, admin: false };
+  },
+  async signIn(login, senha) {
+    login = login.trim().toLowerCase();
+    const u = ls.get('simVR_users', {})[login];
+    if (!u || u.hash !== await hash(u.salt + senha)) throw new Error('Usuário ou senha incorretos.');
+    ls.set('simVR_session', login);
+    return { id: login, nome: login, admin: false };
+  },
+  async signOut() { ls.del('simVR_session'); },
+  async loadBank() {
+    const qs = [];
+    const add = (lista, area) => lista.forEach((q, i) => qs.push({ id: area + '-' + String(i + 1).padStart(3, '0'), area, txt: q.txt || null, t: q.t, o: q.o, c: 0, e: q.e || '', ativa: true }));
+    add(Q_PT, 'pt'); add(Q_SUS, 'sus'); add(Q_TEC, 'tec'); add(Q_ENF, 'enf');
+    return { questoes: qs, textos: Object.assign({}, TEXTOS) };
+  },
+  async history() { return ls.get('simVR_hist_' + ME.id, []); },
+  async saveAttempt(a) {
+    const h = ls.get('simVR_hist_' + ME.id, []);
+    a = Object.assign({ criada_em: new Date().toISOString() }, a);
+    h.push(a); ls.set('simVR_hist_' + ME.id, h);
+    return a;
+  }
+};
+
+// Modo online: Supabase (login real, banco de questões e histórico no servidor)
+const traduz = e => {
+  const m = (e && e.message) || String(e);
+  const map = [
+    [/Invalid login credentials/i, 'E-mail ou senha incorretos.'],
+    [/already registered/i, 'Esse e-mail já tem conta. Use a aba Entrar.'],
+    [/at least 6 characters/i, 'A senha precisa ter pelo menos 6 caracteres.'],
+    [/Email not confirmed/i, 'Confirme seu e-mail pelo link que enviamos antes de entrar.'],
+    [/valid email|invalid format/i, 'Digite um e-mail válido.'],
+    [/rate limit|too many/i, 'Muitas tentativas. Aguarde alguns minutos.'],
+    [/Failed to fetch|NetworkError/i, 'Sem conexão com o servidor. Verifique sua internet.']
+  ];
+  for (const [r, t] of map) if (r.test(m)) return new Error(t);
+  return new Error(m);
+};
+const fromDb = r => ({ id: r.id, area: r.area, txt: r.texto_id, t: r.enunciado, o: r.alternativas, c: r.correta, e: r.comentario, ativa: r.ativa });
+const toDb = q => ({ id: q.id, area: q.area, texto_id: q.txt || null, enunciado: q.t, alternativas: q.o, correta: q.c, comentario: q.e, ativa: q.ativa });
+const ok = ({ data, error }) => { if (error) throw traduz(error); return data; };
+
+const OnlineAPI = {
+  async init() {
+    await loadScript(SUPABASE_JS);
+    sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+    sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY') setTimeout(() => go('novaSenha'), 0); });
+  },
+  async profile(user) {
+    const p = ok(await sb.from('perfis').select('nome,admin').eq('id', user.id).maybeSingle());
+    return { id: user.id, email: user.email, nome: (p && p.nome) || user.email, admin: !!(p && p.admin) };
+  },
+  async session() { const { data } = await sb.auth.getSession(); return data.session ? this.profile(data.session.user) : null; },
+  async signUp(email, senha, nome) {
+    const data = ok(await sb.auth.signUp({ email: email.trim(), password: senha, options: { data: { nome: nome.trim() }, emailRedirectTo: location.origin + location.pathname } }));
+    if (!data.session) return { confirmar: true };
+    return this.profile(data.user);
+  },
+  async signIn(email, senha) { const data = ok(await sb.auth.signInWithPassword({ email: email.trim(), password: senha })); return this.profile(data.user); },
+  async signOut() { await sb.auth.signOut(); },
+  async resetSenha(email) { ok(await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname })); },
+  async novaSenha(s) { ok(await sb.auth.updateUser({ password: s })); },
+  async loadBank() {
+    const qs = [];
+    for (let de = 0; ; de += 1000) {
+      const page = ok(await sb.from('questoes').select('*').order('id').range(de, de + 999));
+      qs.push(...page);
+      if (page.length < 1000) break;
+    }
+    const t = ok(await sb.from('textos').select('*'));
+    return { questoes: qs.map(fromDb), textos: Object.fromEntries(t.map(x => [x.id, x.conteudo])) };
+  },
+  async history() { return ok(await sb.from('tentativas').select('*').eq('user_id', ME.id).order('criada_em')); },
+  async saveAttempt(a) { return ok(await sb.from('tentativas').insert(a).select().single()); },
+  async saveQuestion(q) { ok(await sb.from('questoes').upsert(toDb(q))); },
+  async deleteQuestion(id) { ok(await sb.from('questoes').delete().eq('id', id)); },
+  async saveTexto(id, conteudo) { ok(await sb.from('textos').upsert({ id, conteudo })); },
+  async alunos() {
+    const perfis = ok(await sb.from('perfis').select('id,nome'));
+    const tent = ok(await sb.from('tentativas').select('user_id,cargo,modo,acertos,total,aprovado,criada_em').order('criada_em'));
+    return { perfis, tent };
+  }
+};
+const API = ONLINE ? OnlineAPI : LocalAPI;
+
+async function carregar() {
+  const b = await API.loadBank();
+  BANK = b.questoes; TXT = b.textos;
+  BY_ID = Object.fromEntries(BANK.map(q => [q.id, q]));
+  HIST = await API.history();
+  ui.cargo = ls.get('simVR_cargo_' + ME.id, 'tec');
+  CUR = ls.get('simVR_cur_' + ME.id, null);
+  if (CUR) { CUR.ids = CUR.ids.filter(id => BY_ID[id]); if (!CUR.ids.length) CUR = null; }
+}
+const saveCur = () => CUR ? ls.set('simVR_cur_' + ME.id, CUR) : ls.del('simVR_cur_' + ME.id);
+
+// ======================= Sorteio das provas =======================
+// last[id] = quando a questão apareceu por último; lastOk[id] = se acertou da última vez
+function estat() {
+  const last = {}, lastOk = {};
+  HIST.forEach(h => {
+    const t = Date.parse(h.criada_em) || 0;
+    h.questoes.forEach(x => { last[x.id] = t; lastOk[x.id] = !!BY_ID[x.id] && h.respostas[x.id] === BY_ID[x.id].c; });
+  });
+  return { last, lastOk };
+}
+const ativas = area => BANK.filter(q => q.ativa && q.area === area);
+const areasDoCargo = c => ['pt', 'sus', c];
+
+function montar(modo, area, n) {
+  const c = ui.cargo, { last, lastOk } = estat();
+  // Inéditas primeiro (em ordem aleatória); depois as vistas há mais tempo
+  const pick = (ar, k) => {
+    const pool = ativas(ar);
+    const novas = shuffle(pool.filter(q => !(q.id in last)));
+    const vistas = shuffle(pool.filter(q => q.id in last)).sort((a, b) => last[a.id] - last[b.id]);
+    return novas.concat(vistas).slice(0, k);
+  };
+  let qs;
+  if (modo === 'completo') qs = [...pick('pt', 10), ...pick('sus', 10), ...pick(c, 50)];
+  else if (modo === 'area') qs = pick(area === 'esp' ? c : area, n);
+  else qs = shuffle(areasDoCargo(c).flatMap(ativas).filter(q => lastOk[q.id] === false)).slice(0, n);
+  const ord = { pt: 0, sus: 1 };
+  qs.sort((a, b) => ((ord[a.area] ?? 2) - (ord[b.area] ?? 2)) || (a.area === 'pt' && b.area === 'pt' ? (a.txt || 99) - (b.txt || 99) : 0));
+  return {
+    cargo: c, modo, area: modo === 'area' ? area : null,
+    ids: qs.map(q => q.id),
+    ordem: Object.fromEntries(qs.map(q => [q.id, shuffle([0, 1, 2, 3, 4])])),
+    ans: {}, i: 0, el: 0
+  };
+}
+
+// ======================= Navegação =======================
+function go(v, extra) { clearInterval(timerId); Object.assign(ui, { view: v }, extra || {}); render(); window.scrollTo(0, 0); }
+function render() {
+  if (!ME && !['login', 'novaSenha', 'erro', 'loading'].includes(ui.view)) ui.view = 'login';
+  const views = { login: vLogin, novaSenha: vNovaSenha, home: vHome, exam: vExam, result: vResult, review: vReview, admin: vAdmin, editar: vEditar, erro: vErro };
+  (views[ui.view] || vHome)();
+}
+function vErro() { $('#app').innerHTML = `<div class="card"><h2>Não foi possível carregar</h2><p>${esc(ui.msg)}</p><button class="pri" onclick="location.reload()">Tentar de novo</button></div>`; }
+
+// ---------- Login / cadastro ----------
+function vLogin() {
+  const t = ui.tab, reg = t === 'up', rec = t === 'rec';
+  const idLabel = ONLINE ? 'E-mail' : 'Usuário';
+  $('#app').innerHTML = `
+  <div class="card" style="margin-top:6vh">
+    <h1>Simulado Enfermagem</h1>
+    <p class="mut">Prefeitura de Volta Redonda/RJ · Edital 003/2026-SMA · banca FEVRE</p>
+    ${rec ? '<h2>Recuperar senha</h2>' : `<div class="tabs"><button data-t="in" class="${reg ? '' : 'on'}">Entrar</button><button data-t="up" class="${reg ? 'on' : ''}">Criar conta</button></div>`}
+    <form id="f">
+      ${reg && ONLINE ? '<label>Nome</label><input id="nome" autocomplete="name" required>' : ''}
+      <label>${idLabel}</label><input id="u" ${ONLINE ? 'type="email" autocomplete="email"' : 'autocomplete="username" autocapitalize="none"'} required>
+      ${rec ? '' : `<label>Senha</label><input id="p" type="password" autocomplete="${reg ? 'new-password' : 'current-password'}" required>`}
+      ${reg ? '<label>Confirmar senha</label><input id="p2" type="password" autocomplete="new-password" required>' : ''}
+      <div class="err" id="err"></div><div class="info" id="info"></div>
+      <button class="pri full" style="margin-top:6px" id="sub">${rec ? 'Enviar link de recuperação' : reg ? 'Criar conta' : 'Entrar'}</button>
+    </form>
+    ${ONLINE ? (rec ? '<button class="link" data-t="in">Voltar ao login</button>' : '<button class="link" data-t="rec">Esqueci minha senha</button>') : '<p class="mut" style="margin-top:14px">Modo local: as contas e o histórico ficam salvos só neste aparelho.</p>'}
+  </div>`;
+  $$('[data-t]').forEach(b => b.onclick = () => { ui.tab = b.dataset.t; render(); });
+  $('#f').onsubmit = async ev => {
+    ev.preventDefault();
+    const err = $('#err'), info = $('#info'), sub = $('#sub');
+    err.textContent = info.textContent = '';
+    const u = $('#u').value, p = rec ? '' : $('#p').value;
+    if (reg && p.length < 6) return err.textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+    if (reg && p !== $('#p2').value) return err.textContent = 'As senhas não conferem.';
+    sub.disabled = true;
+    try {
+      if (rec) { await API.resetSenha(u); info.textContent = 'Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha.'; return; }
+      const r = reg ? await API.signUp(u, p, ONLINE ? $('#nome').value : u) : await API.signIn(u, p);
+      if (r && r.confirmar) { info.textContent = 'Conta criada! Abra o link que enviamos para o seu e-mail e depois entre aqui.'; ui.tab = 'in'; return; }
+      ME = r; await carregar(); go('home');
+    } catch (e) { err.textContent = traduz(e).message; }
+    finally { sub.disabled = false; }
+  };
+}
+
+function vNovaSenha() {
+  $('#app').innerHTML = `<div class="card" style="margin-top:6vh"><h2>Criar nova senha</h2>
+    <form id="f"><label>Nova senha</label><input id="p" type="password" autocomplete="new-password" required>
+    <div class="err" id="err"></div><button class="pri full" style="margin-top:6px">Salvar senha</button></form></div>`;
+  $('#f').onsubmit = async ev => {
+    ev.preventDefault();
+    const p = $('#p').value;
+    if (p.length < 6) return $('#err').textContent = 'A senha precisa ter pelo menos 6 caracteres.';
+    try { await API.novaSenha(p); ME = await API.session(); await carregar(); go('home'); }
+    catch (e) { $('#err').textContent = traduz(e).message; }
+  };
+}
+
+// ---------- Painel ----------
+function vHome() {
+  const c = ui.cargo, { last, lastOk } = estat();
+  const doCargo = areasDoCargo(c).flatMap(ativas);
+  const vistas = doCargo.filter(q => q.id in last).length;
+  const erradas = doCargo.filter(q => lastOk[q.id] === false).length;
+  const hist = HIST.map((h, i) => [h, i]).reverse();
+  const qtd = ui.qtd || 20;
+  $('#app').innerHTML = `
+  <div class="top"><div><h1>Olá, ${esc(ME.nome)}</h1><span class="mut">Prova: 70 questões · mínimo 35 pontos, sem zerar nenhuma área</span></div>
+  <button id="out">Sair</button></div>
+  ${CUR ? `<div class="card"><h2>Prova em andamento</h2><p class="mut">${CARGOS[CUR.cargo]} · ${MODOS[CUR.modo]}${CUR.area ? ' · ' + AREAS[CUR.area] : ''} · ${Object.keys(CUR.ans).length}/${CUR.ids.length} respondidas · ${fmt(CUR.el)}</p>
+    <div class="row"><button class="pri" id="cont">Continuar</button><button id="desc">Descartar</button></div></div>` : ''}
+  <div class="card"><h2>Cargo</h2>
+    <div class="tabs">${Object.entries(CARGOS).map(([k, v]) => `<button data-c="${k}" class="${k === c ? 'on' : ''}">${v}</button>`).join('')}</div>
+    <p class="mut">Banco deste cargo: ${doCargo.length} questões · você já viu ${vistas} · ${doCargo.length - vistas} inéditas</p>
+    <div class="bar"><i style="width:${doCargo.length ? vistas / doCargo.length * 100 : 0}%"></i></div>
+  </div>
+  <div class="card"><h2>Simulado completo</h2>
+    <p class="mut">Cada prova é sorteada na hora: 10 Português + 10 SUS + 50 Específicos, priorizando questões que você ainda não viu. As alternativas também mudam de ordem.</p>
+    <button class="pri full" data-start="completo">Gerar nova prova (70 questões)</button>
+  </div>
+  <div class="card"><h2>Treinar por área</h2>
+    <label>Quantidade de questões</label>
+    <select id="qtd">${[10, 20, 30, 50].map(n => `<option ${n === qtd ? 'selected' : ''}>${n}</option>`).join('')}</select>
+    <div class="row" style="margin-top:10px">${Object.entries(AREAS).map(([k, v]) => `<button data-start="area" data-area="${k}">${v}</button>`).join('')}</div>
+  </div>
+  <div class="card"><h2>Treinar as que errei</h2>
+    <p class="mut">${erradas ? `${erradas} questão(ões) que você errou ou deixou em branco da última vez.` : 'Nenhuma questão errada ainda. Elas aparecem aqui depois dos seus simulados.'}</p>
+    <button class="full" data-start="erradas" ${erradas ? '' : 'disabled'}>Treinar erradas (até ${Math.min(erradas, 70) || 0})</button>
+  </div>
+  ${ME.admin ? '<div class="card"><h2>Administração</h2><button class="full" id="adm">Gerenciar questões e ver alunos</button></div>' : ''}
+  <div class="card"><h2>Meu histórico</h2>
+    ${hist.length ? hist.map(([h, i]) => `<button class="item" data-h="${i}"><span>${new Date(h.criada_em).toLocaleDateString('pt-BR')} · ${CARGOS[h.cargo]}<br><span class="mut">${MODOS[h.modo]}${h.area ? ' · ' + AREAS[h.area] : ''} · ${fmt(h.tempo)}</span></span><b>${h.acertos}/${h.total}${h.modo === 'completo' ? (h.aprovado ? ' ✓' : ' ✗') : ''}</b></button>`).join('') : '<p class="mut">Nenhum simulado finalizado ainda.</p>'}
+  </div>
+  <p class="mut" style="text-align:center">${ONLINE ? 'Conectado ao servidor' : 'Modo local (sem servidor)'} · ${BANK.filter(q => q.ativa).length} questões no banco</p>`;
+  $('#out').onclick = async () => { await API.signOut(); ME = null; CUR = null; go('login', { tab: 'in' }); };
+  $$('[data-c]').forEach(b => b.onclick = () => { ui.cargo = b.dataset.c; ls.set('simVR_cargo_' + ME.id, ui.cargo); render(); });
+  $('#qtd').onchange = e => ui.qtd = +e.target.value;
+  $$('[data-start]').forEach(b => b.onclick = () => {
+    if (CUR && !confirm('Isso descarta a prova em andamento. Continuar?')) return;
+    const modo = b.dataset.start;
+    CUR = montar(modo, b.dataset.area, modo === 'erradas' ? 70 : +$('#qtd').value);
+    if (!CUR.ids.length) { CUR = null; return alert('Não há questões disponíveis para esse treino.'); }
+    saveCur(); go('exam');
+  });
+  $$('[data-h]').forEach(b => b.onclick = () => go('result', { h: +b.dataset.h }));
+  if (CUR) { $('#cont').onclick = () => go('exam'); $('#desc').onclick = () => { if (confirm('Descartar a prova em andamento?')) { CUR = null; saveCur(); render(); } }; }
+  if (ME.admin) $('#adm').onclick = () => go('admin', { atab: 'q' });
+}
+
+// ---------- Prova ----------
+function vExam() {
+  const s = CUR;
+  if (!s) return go('home');
+  const q = BY_ID[s.ids[s.i]], ordem = s.ordem[q.id], n = s.ids.length, done = Object.keys(s.ans).length;
+  $('#app').innerHTML = `
+  <div class="top"><button id="back">← Painel</button><span class="timer" id="tm">${fmt(s.el)}</span><button class="pri" id="fin">Finalizar</button></div>
+  <div class="card">
+    <div class="top" style="margin-bottom:8px"><b>Questão ${s.i + 1} de ${n}</b><span class="badge">${AREAS[areaOf(q)]}</span></div>
+    ${q.txt && TXT[q.txt] ? `<div class="texto"><b>Texto</b><br>${esc(TXT[q.txt])}</div>` : ''}
+    <div>${esc(q.t)}</div>
+    ${ordem.map((orig, k) => `<button class="opt ${s.ans[q.id] === orig ? 'on' : ''}" data-o="${orig}"><b>${L[k]}</b><span>${esc(q.o[orig])}</span></button>`).join('')}
+    <div class="nav"><button id="prev" ${s.i ? '' : 'disabled'}>← Anterior</button><button id="next" class="pri" ${s.i < n - 1 ? '' : 'disabled'}>Próxima →</button></div>
+  </div>
+  <div class="card"><div class="top" style="margin:0"><b>Mapa de questões</b><span class="mut">${done}/${n} respondidas</span></div>
+    <div class="grid">${s.ids.map((id, k) => `<button data-g="${k}" class="${s.ans[id] !== undefined ? 'ans' : ''} ${k === s.i ? 'cur' : ''}">${k + 1}</button>`).join('')}</div>
+  </div>`;
+  const move = i => { s.i = i; saveCur(); go('exam'); };
+  $$('.opt').forEach(b => b.onclick = () => {
+    const o = +b.dataset.o;
+    if (s.ans[q.id] === o) delete s.ans[q.id]; else s.ans[q.id] = o;
+    saveCur(); vExam();
+  });
+  $$('[data-g]').forEach(b => b.onclick = () => move(+b.dataset.g));
+  $('#prev').onclick = () => move(s.i - 1);
+  $('#next').onclick = () => move(s.i + 1);
+  $('#back').onclick = () => go('home');
+  $('#fin').onclick = () => {
+    const falta = n - Object.keys(s.ans).length;
+    if (confirm(falta ? `Ainda há ${falta} questão(ões) sem resposta. Finalizar mesmo assim?` : 'Finalizar e ver o resultado?')) finish();
+  };
+  clearInterval(timerId);
+  timerId = setInterval(() => { s.el++; const t = $('#tm'); if (t) t.textContent = fmt(s.el); if (s.el % 5 === 0) saveCur(); }, 1000);
+}
+
+async function finish() {
+  clearInterval(timerId);
+  const s = CUR, por = {};
+  s.ids.forEach(id => {
+    const q = BY_ID[id], a = areaOf(q);
+    por[a] = por[a] || { a: 0, n: 0 }; por[a].n++;
+    if (s.ans[id] === q.c) por[a].a++;
+  });
+  const acertos = Object.values(por).reduce((t, p) => t + p.a, 0);
+  const reg = {
+    cargo: s.cargo, modo: s.modo, area: s.area,
+    questoes: s.ids.map(id => ({ id, ordem: s.ordem[id] })), respostas: s.ans,
+    acertos, total: s.ids.length, por_area: por, tempo: s.el,
+    aprovado: s.modo === 'completo' ? acertos >= 35 && Object.values(por).every(p => p.a > 0) : null
+  };
+  try {
+    HIST.push(await API.saveAttempt(reg));
+    CUR = null; saveCur();
+    go('result', { h: HIST.length - 1 });
+  } catch (e) {
+    alert('Não foi possível salvar o resultado: ' + traduz(e).message + '\nSuas respostas continuam guardadas; tente finalizar de novo.');
+    go('exam');
+  }
+}
+
+// ---------- Resultado ----------
+function vResult() {
+  const h = HIST[ui.h];
+  if (!h) return go('home');
+  const zerou = Object.entries(h.por_area).filter(([, p]) => !p.a).map(([k]) => AREAS[k]);
+  const erros = h.total - h.acertos;
+  $('#app').innerHTML = `
+  <div class="top"><button id="back">← Painel</button><span class="mut">${new Date(h.criada_em).toLocaleString('pt-BR')}</span></div>
+  <div class="card">
+    <span class="mut">${CARGOS[h.cargo]} · ${MODOS[h.modo]}${h.area ? ' · ' + AREAS[h.area] : ''} · tempo ${fmt(h.tempo)}</span>
+    <div class="big">${h.acertos}<span class="mut" style="font-size:1.2rem"> / ${h.total} acertos (${Math.round(h.acertos / h.total * 100)}%)</span></div>
+    ${h.modo !== 'completo' ? '' : h.aprovado
+      ? '<div class="res ok">Aprovado pelos critérios do edital (≥ 35 pontos e nenhuma área zerada).</div>'
+      : `<div class="res bad">Não atingiu os critérios: ${[h.acertos < 35 ? `faltaram ${35 - h.acertos} ponto(s) para 35` : '', zerou.length ? 'zerou ' + zerou.join(', ') : ''].filter(Boolean).join(' e ')}.</div>`}
+    ${['pt', 'sus', 'esp'].filter(k => h.por_area[k]).map(k => { const p = h.por_area[k]; return `<div class="top" style="margin:8px 0 0"><span>${AREAS[k]}</span><b>${p.a}/${p.n}</b></div><div class="bar"><i style="width:${p.a / p.n * 100}%"></i></div>`; }).join('')}
+    <div class="row" style="margin-top:10px"><button class="pri" id="rv">Gabarito comentado</button><button id="rw">Só as erradas (${erros})</button></div>
+  </div>`;
+  $('#back').onclick = () => go('home');
+  $('#rv').onclick = () => go('review', { wrong: false });
+  $('#rw').onclick = () => go('review', { wrong: true });
+}
+
+function vReview() {
+  const h = HIST[ui.h];
+  const list = h.questoes.map((x, k) => ({ q: BY_ID[x.id], ordem: x.ordem, k, a: h.respostas[x.id] }))
+    .filter(x => x.q && (!ui.wrong || x.a !== x.q.c));
+  $('#app').innerHTML = `
+  <div class="top"><button id="back">← Resultado</button><b>${ui.wrong ? 'Erradas / em branco' : 'Gabarito comentado'}</b></div>
+  ${list.length ? '' : '<div class="card">Nenhuma questão errada. Parabéns!</div>'}
+  ${list.map(({ q, ordem, k, a }) => {
+    const letra = orig => L[ordem.indexOf(orig)];
+    return `<div class="card">
+    <div class="top" style="margin-bottom:8px"><b>Questão ${k + 1}</b><span class="badge">${AREAS[areaOf(q)]}</span></div>
+    ${q.txt && TXT[q.txt] ? `<div class="texto">${esc(TXT[q.txt])}</div>` : ''}
+    <div>${esc(q.t)}</div>
+    ${ordem.map((orig, j) => `<div class="opt ${orig === q.c ? 'ok' : orig === a ? 'bad' : ''}"><b>${L[j]}</b><span>${esc(q.o[orig])}</span></div>`).join('')}
+    <p class="mut" style="margin:8px 0 0">${a === undefined ? 'Em branco' : a === q.c ? 'Você acertou' : 'Sua resposta: ' + letra(a)} · Gabarito: ${letra(q.c)}</p>
+    ${q.e ? `<div class="coment">${esc(q.e)}</div>` : ''}
+  </div>`; }).join('')}`;
+  $('#back').onclick = () => go('result');
+}
+
+// ---------- Administração (somente modo online + perfil admin) ----------
+function vAdmin() {
+  if (!ME.admin) return go('home');
+  const t = ui.atab || 'q';
+  $('#app').innerHTML = `
+  <div class="top"><button id="back">← Painel</button><b>Administração</b></div>
+  <div class="tabs">${[['q', 'Questões'], ['t', 'Textos'], ['a', 'Alunos']].map(([k, v]) => `<button data-at="${k}" class="${k === t ? 'on' : ''}">${v}</button>`).join('')}</div>
+  <div id="adm"></div>`;
+  $('#back').onclick = () => go('home');
+  $$('[data-at]').forEach(b => b.onclick = () => go('admin', { atab: b.dataset.at }));
+  ({ q: admQuestoes, t: admTextos, a: admAlunos })[t]();
+}
+
+function admQuestoes() {
+  const f = ui.filtro || { area: '', busca: '' };
+  const termo = f.busca.trim().toLowerCase();
+  const lista = BANK.filter(q => (!f.area || q.area === f.area) && (!termo || (q.id + ' ' + q.t + ' ' + q.o.join(' ')).toLowerCase().includes(termo)));
+  const cont = a => BANK.filter(q => q.area === a && q.ativa).length;
+  $('#adm').innerHTML = `
+  <div class="card">
+    <p class="mut">Ativas: ${Object.entries(AREAS_DB).map(([k, v]) => `${v} ${cont(k)}`).join(' · ')}</p>
+    <div class="row"><select id="fa"><option value="">Todas as áreas</option>${Object.entries(AREAS_DB).map(([k, v]) => `<option value="${k}" ${f.area === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+    <input id="fb" placeholder="Buscar por texto ou código" value="${esc(f.busca)}"></div>
+    <button class="pri full" style="margin-top:10px" id="nova">+ Nova questão</button>
+  </div>
+  <div class="card"><p class="mut">${lista.length} encontrada(s)${lista.length > 100 ? ' · mostrando 100' : ''}</p>
+    ${lista.slice(0, 100).map(q => `<button class="item" data-q="${esc(q.id)}"><span><b>${esc(q.id)}</b> ${q.ativa ? '' : '<span class="badge off">inativa</span>'}<br><span class="mut">${esc(q.t.slice(0, 140))}${q.t.length > 140 ? '…' : ''}</span></span><span>Editar</span></button>`).join('')}
+  </div>`;
+  const upd = () => { ui.filtro = { area: $('#fa').value, busca: $('#fb').value }; };
+  $('#fa').onchange = () => { upd(); admQuestoes(); };
+  $('#fb').onkeydown = e => { if (e.key === 'Enter') { upd(); admQuestoes(); } };
+  $('#fb').onblur = () => { if ($('#fb').value !== f.busca) { upd(); admQuestoes(); } };
+  $('#nova').onclick = () => go('editar', { qid: null });
+  $$('[data-q]').forEach(b => b.onclick = () => go('editar', { qid: b.dataset.q }));
+}
+
+function vEditar() {
+  const q = ui.qid ? BY_ID[ui.qid] : { id: null, area: (ui.filtro && ui.filtro.area) || 'pt', txt: null, t: '', o: ['', '', '', '', ''], c: 0, e: '', ativa: true };
+  $('#app').innerHTML = `
+  <div class="top"><button id="back">← Questões</button><b>${q.id ? 'Editar ' + esc(q.id) : 'Nova questão'}</b></div>
+  <div class="card"><form id="f">
+    <div class="row"><div><label>Área</label><select id="area">${Object.entries(AREAS_DB).map(([k, v]) => `<option value="${k}" ${q.area === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+    <div><label>Texto de apoio</label><select id="txt"><option value="">Nenhum</option>${Object.keys(TXT).map(id => `<option value="${id}" ${+q.txt === +id ? 'selected' : ''}>Texto ${id}</option>`).join('')}</select></div></div>
+    <label>Enunciado</label><textarea id="t" required>${esc(q.t)}</textarea>
+    <label>Alternativas (marque a correta)</label>
+    ${q.o.map((o, k) => `<div class="altrow"><input type="radio" name="c" value="${k}" ${q.c === k ? 'checked' : ''} aria-label="Correta ${L[k]}"><input class="alt" value="${esc(o)}" placeholder="Alternativa ${L[k]}" required></div>`).join('')}
+    <label>Comentário (gabarito comentado)</label><textarea id="e">${esc(q.e)}</textarea>
+    <label class="chk"><input type="checkbox" id="ativa" ${q.ativa ? 'checked' : ''}> Questão ativa (entra no sorteio)</label>
+    <div class="err" id="err"></div>
+    <div class="row" style="margin-top:8px"><button class="pri" id="sv">Salvar</button>${q.id ? '<button type="button" class="danger" id="del">Excluir</button>' : ''}</div>
+  </form></div>`;
+  $('#back').onclick = () => go('admin', { atab: 'q' });
+  $('#f').onsubmit = async ev => {
+    ev.preventDefault();
+    const area = $('#area').value;
+    const nq = {
+      id: q.id || area + '-n' + Date.now().toString(36),
+      area, txt: $('#txt').value ? +$('#txt').value : null,
+      t: $('#t').value.trim(), o: $$('.alt').map(i => i.value.trim()),
+      c: +document.querySelector('input[name=c]:checked').value,
+      e: $('#e').value.trim(), ativa: $('#ativa').checked
+    };
+    if (new Set(nq.o).size < 5) return $('#err').textContent = 'As 5 alternativas precisam ser diferentes.';
+    $('#sv').disabled = true;
+    try { await API.saveQuestion(nq); await carregar(); go('admin', { atab: 'q' }); }
+    catch (e) { $('#err').textContent = traduz(e).message; $('#sv').disabled = false; }
+  };
+  if (q.id) $('#del').onclick = async () => {
+    if (!confirm('Excluir definitivamente esta questão? Se ela já apareceu em provas, prefira desmarcar "ativa".')) return;
+    try { await API.deleteQuestion(q.id); await carregar(); go('admin', { atab: 'q' }); }
+    catch (e) { $('#err').textContent = traduz(e).message; }
+  };
+}
+
+function admTextos() {
+  const ids = Object.keys(TXT).map(Number).sort((a, b) => a - b);
+  $('#adm').innerHTML = `
+  <div class="card"><button class="pri full" id="novo">+ Novo texto</button></div>
+  ${ids.map(id => `<div class="card"><b>Texto ${id}</b> <span class="mut">· ${BANK.filter(q => +q.txt === id).length} questão(ões)</span>
+    <textarea data-tx="${id}" style="margin-top:8px;min-height:140px">${esc(TXT[id])}</textarea>
+    <button style="margin-top:8px" data-sv="${id}">Salvar texto</button></div>`).join('')}`;
+  $('#novo').onclick = async () => {
+    const id = (ids.length ? Math.max(...ids) : 0) + 1;
+    try { await API.saveTexto(id, 'Escreva aqui o novo texto.'); await carregar(); admTextos(); }
+    catch (e) { alert(traduz(e).message); }
+  };
+  $$('[data-sv]').forEach(b => b.onclick = async () => {
+    const id = +b.dataset.sv;
+    try { await API.saveTexto(id, $(`[data-tx="${id}"]`).value.trim()); TXT[id] = $(`[data-tx="${id}"]`).value.trim(); b.textContent = 'Salvo ✓'; }
+    catch (e) { alert(traduz(e).message); }
+  });
+}
+
+async function admAlunos() {
+  $('#adm').innerHTML = '<div class="card">Carregando…</div>';
+  try {
+    const { perfis, tent } = await API.alunos();
+    const rows = perfis.map(p => {
+      const ts = tent.filter(t => t.user_id === p.id), comp = ts.filter(t => t.modo === 'completo');
+      const media = ts.length ? Math.round(ts.reduce((s, t) => s + t.acertos / t.total, 0) / ts.length * 100) : null;
+      return { nome: p.nome, n: ts.length, comp: comp.length, apr: comp.filter(t => t.aprovado).length, media, ult: ts.length ? ts[ts.length - 1].criada_em : null };
+    }).sort((a, b) => (b.ult || '').localeCompare(a.ult || ''));
+    $('#adm').innerHTML = `<div class="card"><p class="mut">${perfis.length} aluno(s) cadastrado(s)</p><div class="tbl"><table>
+      <tr><th>Nome</th><th>Provas</th><th>Completos (aprov.)</th><th>Média</th><th>Último</th></tr>
+      ${rows.map(r => `<tr><td>${esc(r.nome)}</td><td>${r.n}</td><td>${r.comp} (${r.apr})</td><td>${r.media === null ? '–' : r.media + '%'}</td><td>${r.ult ? new Date(r.ult).toLocaleDateString('pt-BR') : '–'}</td></tr>`).join('')}
+    </table></div></div>`;
+  } catch (e) { $('#adm').innerHTML = `<div class="card err">${esc(traduz(e).message)}</div>`; }
+}
+
+// ======================= Início =======================
+(async () => {
+  try {
+    await API.init();
+    ME = await API.session();
+    if (ME) await carregar();
+    if (ui.view === 'loading') go(ME ? 'home' : 'login');
+  } catch (e) { go('erro', { msg: traduz(e).message }); }
+})();
+</script>
+</body>
+</html>
