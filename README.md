@@ -41,6 +41,10 @@ Todas as questões têm 5 alternativas e comentário explicando o gabarito.
 - **Hospedagem**: Netlify.
 - **Modo local**: sem Supabase configurado, o site roda 100% no navegador (contas e histórico em `localStorage`), útil para desenvolvimento e uso offline.
 
+## Testes
+
+O site em produção passou por **46 testes**: segurança sem login, segurança com login, correção no servidor, funções de administrador e o fluxo completo do aluno. Todos foram aprovados. Veja o [relatório de testes](testes/RELATORIO-DE-TESTES.md).
+
 ## Estrutura
 
 ```
@@ -51,6 +55,7 @@ supabase/schema.sql     # tabelas, gatilhos e políticas RLS
 supabase/gera-seed.js   # gera os arquivos SQL de carga a partir de banco/
 supabase/seed-*.sql     # carga inicial (textos + 510 questões)
 supabase/seguranca.sql  # gabarito oculto, correção no servidor, limites e funções de admin
+testes/                 # scripts de teste e relatório (46/46 aprovados)
 COMO-CONFIGURAR.md      # passo a passo de implantação
 ```
 
