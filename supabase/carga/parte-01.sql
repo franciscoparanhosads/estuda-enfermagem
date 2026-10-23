@@ -250,7 +250,7 @@ insert into public.questoes (id, area, texto_id, enunciado, alternativas, corret
 
 I. Em "Estude com antecedência, pois a prova está próxima", a vírgula antes de "pois" separa uma oração coordenada explicativa.
 II. Em "Na manhã de ontem, a equipe realizou a vacinação", a vírgula após o adjunto adverbial deslocado é admitida.
-III. Em "Volta Redonda, a Cidade do Aço, recebeu o congresso", as vírgulas isolam um aposto explicativo.
+III. Em "Brasília, a capital federal, recebeu o congresso", as vírgulas isolam um aposto explicativo.
 IV. Em "Os técnicos de enfermagem, participaram da capacitação", a vírgula está correta, pois o sujeito é extenso.
 
 Está correto o que se afirma em:', '["I, II e III apenas","III e IV apenas","I e IV apenas","I, III e IV apenas","III apenas"]'::jsonb, 0, 'Não se separa o sujeito do verbo por vírgula, mesmo quando o sujeito é extenso.') on conflict (id) do update set area = excluded.area, texto_id = excluded.texto_id, enunciado = excluded.enunciado, alternativas = excluded.alternativas, correta = excluded.correta, comentario = excluded.comentario;

@@ -1,4 +1,4 @@
-// Banco de questões — Simulado Prefeitura de Volta Redonda/RJ (Edital 003/2026-SMA, banca FEVRE)
+// Banco de questões — simulados para concursos de Enfermagem (Técnico e Enfermeiro)
 // Formato: t = enunciado, o = alternativas (a PRIMEIRA é sempre a correta; o site embaralha de forma fixa),
 // e = comentário, txt = id do texto de apoio (opcional).
 
@@ -423,7 +423,7 @@ const Q_ENF = [
         "feito apenas após a menopausa.",
         "feito a cada 6 meses a partir dos 18 anos.",
         "contraindicado em gestantes."],
-    e: "Diretriz INCA 2016. Obs.: o MS vem implantando o teste DNA-HPV como rastreamento (intervalo de 5 anos), mas o edital costuma cobrar a diretriz citopatológica." },
+    e: "Diretriz INCA 2016. Obs.: o MS vem implantando o teste DNA-HPV como rastreamento (intervalo de 5 anos), mas as provas costumam cobrar a diretriz citopatológica." },
   { t: "A Lei Maria da Penha (Lei nº 11.340/2006) define como formas de violência doméstica e familiar contra a mulher, EXCETO:",
     o: ["institucional.", "física.", "psicológica.", "patrimonial.", "moral."],
     e: "Art. 7º: física, psicológica, sexual, patrimonial e moral." },

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Simulado VR">
+<meta name="apple-mobile-web-app-title" content="Estuda Enfermagem">
 <meta name="theme-color" content="#0f766e">
-<title>Simulado Enfermagem VR</title>
+<title>Estuda Enfermagem</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--fg:#1a1d23;--mut:#5d6470;--bd:#dde1e7;--pri:#0f766e;--pri2:#0d5f59;--prifg:#fff;--sel:#e3f3f1;--ok:#15803d;--okbg:#e6f5eb;--bad:#b91c1c;--badbg:#fdecec;--warnbg:#fdf6e3}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1b1f25;--fg:#e8eaed;--mut:#9aa3ad;--bd:#2d333b;--pri:#2bb3a6;--pri2:#25998e;--prifg:#06201d;--sel:#16332f;--ok:#4ade80;--okbg:#12291a;--bad:#f87171;--badbg:#2e1515;--warnbg:#2b250f}}
@@ -309,7 +309,6 @@ function vLogin() {
   $('#app').innerHTML = `
   <div class="card" style="margin-top:6vh">
     <h1>Simulado Enfermagem</h1>
-    <p class="mut">Prefeitura de Volta Redonda/RJ · Edital 003/2026-SMA · banca FEVRE</p>
     ${rec ? '<h2>Recuperar senha</h2>' : `<div class="tabs"><button data-t="in" class="${reg ? '' : 'on'}">Entrar</button><button data-t="up" class="${reg ? 'on' : ''}">Criar conta</button></div>`}
     <form id="f">
       ${reg && ONLINE ? '<label>Nome</label><input id="nome" autocomplete="name" required>' : ''}
@@ -483,7 +482,7 @@ function vResult() {
     <span class="mut">${CARGOS[h.cargo]} · ${MODOS[h.modo]}${h.area ? ' · ' + AREAS[h.area] : ''} · tempo ${fmt(h.tempo)}</span>
     <div class="big">${h.acertos}<span class="mut" style="font-size:1.2rem"> / ${h.total} acertos (${Math.round(h.acertos / h.total * 100)}%)</span></div>
     ${h.modo !== 'completo' ? '' : h.aprovado
-      ? '<div class="res ok">Aprovado pelos critérios do edital (≥ 35 pontos e nenhuma área zerada).</div>'
+      ? '<div class="res ok">Aprovado: 35 pontos ou mais e nenhuma área zerada.</div>'
       : `<div class="res bad">Não atingiu os critérios: ${[h.acertos < 35 ? `faltaram ${35 - h.acertos} ponto(s) para 35` : '', zerou.length ? 'zerou ' + zerou.join(', ') : ''].filter(Boolean).join(' e ')}.</div>`}
     ${['pt', 'sus', 'esp'].filter(k => h.por_area[k]).map(k => { const p = h.por_area[k]; return `<div class="top" style="margin:8px 0 0"><span>${AREAS[k]}</span><b>${p.a}/${p.n}</b></div><div class="bar"><i style="width:${p.a / p.n * 100}%"></i></div>`; }).join('')}
     <div class="row" style="margin-top:10px"><button class="pri" id="rv">Gabarito comentado</button><button id="rw">Só as erradas (${erros})</button></div>

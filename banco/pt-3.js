@@ -81,7 +81,7 @@ Q_PT.push(
   af("Sobre o emprego dos sinais de pontuação, analise as afirmativas a seguir.", [
     ["Em \"Estude com antecedência, pois a prova está próxima\", a vírgula antes de \"pois\" separa uma oração coordenada explicativa.", true],
     ["Em \"Na manhã de ontem, a equipe realizou a vacinação\", a vírgula após o adjunto adverbial deslocado é admitida.", true],
-    ["Em \"Volta Redonda, a Cidade do Aço, recebeu o congresso\", as vírgulas isolam um aposto explicativo.", true],
+    ["Em \"Brasília, a capital federal, recebeu o congresso\", as vírgulas isolam um aposto explicativo.", true],
     ["Em \"Os técnicos de enfermagem, participaram da capacitação\", a vírgula está correta, pois o sujeito é extenso.", false]
   ], "Não se separa o sujeito do verbo por vírgula, mesmo quando o sujeito é extenso." ),
 
