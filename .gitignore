@@ -11,3 +11,6 @@ site-publicar/
 Thumbs.db
 .DS_Store
 node_modules/
+
+# Carga incremental gerada para migração (use carga/ em instalações novas)
+supabase/carga-novas/

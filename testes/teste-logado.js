@@ -40,8 +40,14 @@
   r = await fin([{ id: 'pt-001', ordem: o }, { id: 'pt-002', ordem: o }], { 'pt-001': BY_ID['pt-001'].c, 'pt-002': 9 }, { p_modo: 'completo', p_area: null });
   add('Correção no servidor (1 certa + 1 inválida)', 'acertos 1/2', !r.error && r.data.acertos === 1 && r.data.total === 2, r.error ? r.error.message : `${r.data.acertos}/${r.data.total}`);
   add('Simulado completo incompleto não aprova', 'aprovado = false', !r.error && r.data.aprovado === false, r.error ? r.error.message : 'aprovado = ' + r.data.aprovado);
-  r = await sb.rpc('admin_questoes').range(0, 999);
-  add('Admin carrega o banco com gabarito', '510 questões', !r.error && r.data.length === 510, r.error ? r.error.message : r.data.length + ' questões');
+  let banco = [], erroBanco = null;
+  for (let de = 0; ; de += 1000) {
+    const p = await sb.rpc('admin_questoes').range(de, de + 999);
+    if (p.error) { erroBanco = p.error; break; }
+    banco = banco.concat(p.data);
+    if (p.data.length < 1000) break;
+  }
+  add('Admin carrega o banco com gabarito', '1.500 questões ou mais', !erroBanco && banco.length >= 1500, erroBanco ? erroBanco.message : banco.length + ' questões');
 
   // ---- Prova pela interface ----
   window.confirm = () => true;

@@ -36,7 +36,8 @@ button:disabled{opacity:.45;cursor:default}
 .top>button{white-space:nowrap;flex:0 0 auto}
 .badge{display:inline-block;font-size:.75rem;padding:3px 8px;border-radius:99px;background:var(--sel);color:var(--pri);font-weight:600;white-space:nowrap}
 .badge.off{background:var(--badbg);color:var(--bad)}
-.texto{background:var(--bg);border-left:3px solid var(--pri);padding:10px 12px;border-radius:6px;font-size:.95rem;margin-bottom:12px}
+.texto{background:var(--bg);border-left:3px solid var(--pri);padding:10px 12px;border-radius:6px;font-size:.95rem;margin-bottom:12px;white-space:pre-line}
+.enun{white-space:pre-line}
 .opt{display:flex;gap:10px;width:100%;text-align:left;margin-top:8px;align-items:flex-start;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;background:var(--card)}
 .opt b{flex:0 0 26px;height:26px;border-radius:50%;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .opt.on{border-color:var(--pri);background:var(--sel)}.opt.on b{background:var(--pri);color:var(--prifg);border-color:var(--pri)}
@@ -67,7 +68,15 @@ const ONLINE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
 const TURNSTILE_JS = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 const CAPTCHA = ONLINE && !!CFG.turnstileSiteKey;
-const LOCAL_FILES = ['questoes.js', 'banco/pt-sus.js', 'banco/tec-1.js', 'banco/tec-2.js', 'banco/enf-1.js', 'banco/enf-2.js'];
+// Mesma ordem de supabase/gera-seed.js (os IDs dependem dela)
+const LOCAL_FILES = [
+  'questoes.js', 'banco/_formatos.js',
+  'banco/pt-sus.js', 'banco/tec-1.js', 'banco/tec-2.js', 'banco/enf-1.js', 'banco/enf-2.js',
+  'banco/pt-2.js', 'banco/pt-3.js', 'banco/sus-2.js', 'banco/sus-3.js',
+  'banco/tec-3.js', 'banco/tec-4.js', 'banco/tec-5.js', 'banco/tec-6.js', 'banco/tec-7.js', 'banco/tec-8.js',
+  'banco/enf-3.js', 'banco/enf-4.js', 'banco/enf-5.js', 'banco/enf-6.js', 'banco/enf-7.js', 'banco/enf-8.js',
+  'banco/fechamento.js'
+];
 const AREAS = { pt: 'Língua Portuguesa', sus: 'Legislação do SUS', esp: 'Conhecimentos Específicos' };
 const AREAS_DB = { pt: 'Português', sus: 'SUS', tec: 'Técnico', enf: 'Enfermeiro' };
 const CARGOS = { tec: 'Técnico em Enfermagem', enf: 'Enfermeiro' };
@@ -209,7 +218,16 @@ const OnlineAPI = {
   async finalizar(p) {
     return ok(await sb.rpc('finalizar_prova', { p_cargo: p.cargo, p_modo: p.modo, p_area: p.area, p_questoes: p.questoes, p_respostas: p.respostas, p_tempo: p.tempo }));
   },
-  async gabarito() { return ok(await sb.rpc('meu_gabarito')); },
+  async gabarito() {
+    // A API devolve no máximo 1.000 linhas por chamada; com o banco grande, busca em páginas
+    const todos = [];
+    for (let de = 0; ; de += 1000) {
+      const page = ok(await sb.rpc('meu_gabarito').range(de, de + 999));
+      todos.push(...page);
+      if (page.length < 1000) break;
+    }
+    return todos;
+  },
   async saveQuestion(q) { ok(await sb.rpc('admin_salvar_questao', { q: toDb(q) })); },
   async deleteQuestion(id) { ok(await sb.rpc('admin_excluir_questao', { p_id: id })); },
   async saveTexto(id, conteudo) { ok(await sb.from('textos').upsert({ id, conteudo })); },
@@ -410,7 +428,7 @@ function vExam() {
   <div class="card">
     <div class="top" style="margin-bottom:8px"><b>Questão ${s.i + 1} de ${n}</b><span class="badge">${AREAS[areaOf(q)]}</span></div>
     ${q.txt && TXT[q.txt] ? `<div class="texto"><b>Texto</b><br>${esc(TXT[q.txt])}</div>` : ''}
-    <div>${esc(q.t)}</div>
+    <div class="enun">${esc(q.t)}</div>
     ${ordem.map((orig, k) => `<button class="opt ${s.ans[q.id] === orig ? 'on' : ''}" data-o="${orig}"><b>${L[k]}</b><span>${esc(q.o[orig])}</span></button>`).join('')}
     <div class="nav"><button id="prev" ${s.i ? '' : 'disabled'}>← Anterior</button><button id="next" class="pri" ${s.i < n - 1 ? '' : 'disabled'}>Próxima →</button></div>
   </div>
@@ -487,7 +505,7 @@ function vReview() {
     return `<div class="card">
     <div class="top" style="margin-bottom:8px"><b>Questão ${k + 1}</b><span class="badge">${AREAS[areaOf(q)]}</span></div>
     ${q.txt && TXT[q.txt] ? `<div class="texto">${esc(TXT[q.txt])}</div>` : ''}
-    <div>${esc(q.t)}</div>
+    <div class="enun">${esc(q.t)}</div>
     ${ordem.map((orig, j) => `<div class="opt ${orig === q.c ? 'ok' : orig === a ? 'bad' : ''}"><b>${L[j]}</b><span>${esc(q.o[orig])}</span></div>`).join('')}
     <p class="mut" style="margin:8px 0 0">${a === undefined ? 'Em branco' : a === q.c ? 'Você acertou' : 'Sua resposta: ' + letra(a)} · Gabarito: ${letra(q.c)}</p>
     ${q.e ? `<div class="coment">${esc(q.e)}</div>` : ''}

@@ -43,7 +43,7 @@ Criar uma conta de aluno (sem perfil de administrador) e confirmar que ela receb
 
 ### ⬜ Revisão do banco de questões
 
-Revisar o conteúdo das 510 questões com alguém da área (atualizações de normas, como a COFEN 736/2024 e o rastreamento do câncer do colo do útero por DNA-HPV) e corrigir pelo painel de administração.
+Revisar o conteúdo das 1.500 questões com alguém da área (atualizações de normas, como a COFEN 736/2024 e o rastreamento do câncer do colo do útero por DNA-HPV) e corrigir pelo painel de administração.
 
 ## Prioridade baixa
 
@@ -65,7 +65,7 @@ delete from public.tentativas where id in (2, 3);
 
 ## Concluído
 
-- ✅ Banco com 510 questões (Português, SUS, Técnico e Enfermeiro)
+- ✅ Banco com 1.500 questões (Português, SUS, Técnico e Enfermeiro), nos formatos usados pela banca
 - ✅ Provas sorteadas na hora, com prioridade às questões inéditas e alternativas embaralhadas
 - ✅ Login real com Supabase e histórico salvo no servidor
 - ✅ Painel de administração (questões, textos e alunos)

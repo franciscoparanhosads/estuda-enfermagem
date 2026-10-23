@@ -21,13 +21,13 @@ Plataforma web de simulados para o concurso da Prefeitura de Volta Redonda/RJ (E
 
 | Área | Questões |
 |---|---|
-| Língua Portuguesa (6 textos de interpretação + gramática) | 60 |
-| Legislação do SUS (CF/88, Leis 8.080 e 8.142, Decreto 7.508, LC 141, PNAB) | 60 |
-| Conhecimentos Específicos — Técnico em Enfermagem | 208 |
-| Conhecimentos Específicos — Enfermeiro | 182 |
-| **Total** | **510** |
+| Língua Portuguesa (12 textos de interpretação + gramática, semântica e textualidade) | 200 |
+| Legislação do SUS (CF/88, Leis 8.080 e 8.142, Decreto 7.508, LC 141, PNAB, PNH, RUE/SAMU, Rede Alyne, RAPS e outras políticas) | 200 |
+| Conhecimentos Específicos — Técnico em Enfermagem | 546 |
+| Conhecimentos Específicos — Enfermeiro | 554 |
+| **Total** | **1.500** |
 
-Todas as questões têm 5 alternativas e comentário explicando o gabarito.
+Todas as questões têm 5 alternativas e comentário explicando o gabarito. Além das questões diretas, o banco reproduz os formatos usados pela banca, como "registre V ou F" com sequência, "analise as afirmativas I, II e III", associação de colunas e asserção-razão. As alternativas desses formatos são geradas automaticamente a partir dos itens (`banco/_formatos.js`), o que evita erros de gabarito.
 
 ## Tecnologias
 
@@ -57,7 +57,7 @@ config.example.js       # modelo do config.js (URL e chave pública do Supabase;
 questoes.js, banco/     # banco de questões em JS (fonte da carga inicial e do modo local)
 supabase/schema.sql     # tabelas, gatilhos e políticas RLS
 supabase/gera-seed.js   # gera os arquivos SQL de carga a partir de banco/
-supabase/seed-*.sql     # carga inicial (textos + 510 questões)
+supabase/carga/         # carga do banco em partes (textos + 1.500 questões)
 supabase/seguranca.sql  # gabarito oculto, correção no servidor, limites e funções de admin
 testes/                 # scripts de teste e relatório (46/46 aprovados)
 COMO-CONFIGURAR.md      # passo a passo de implantação
@@ -78,7 +78,7 @@ COMO-CONFIGURAR.md      # passo a passo de implantação
 npx serve .
 ```
 
-**Com Supabase:** siga o [COMO-CONFIGURAR.md](COMO-CONFIGURAR.md). Em resumo: rode `supabase/schema.sql` e os `seed-*.sql` no SQL Editor, copie `config.example.js` para `config.js`, preencha com os dados do seu projeto e publique os arquivos estáticos. O `config.js` fica fora do repositório (`.gitignore`).
+**Com Supabase:** siga o [COMO-CONFIGURAR.md](COMO-CONFIGURAR.md). Em resumo: rode `supabase/schema.sql`, as partes de `supabase/carga/` e `supabase/seguranca.sql` no SQL Editor, copie `config.example.js` para `config.js`, preencha com os dados do seu projeto e publique os arquivos estáticos. O `config.js` fica fora do repositório (`.gitignore`).
 
 Para regenerar a carga após editar `banco/`:
 

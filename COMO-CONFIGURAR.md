@@ -15,10 +15,8 @@ O site funciona de dois jeitos:
 No menu **SQL Editor** → **New query**, cole e rode (**Run**) um arquivo por vez, nesta ordem:
 
 1. `supabase/schema.sql` — tabelas e regras de segurança
-2. `supabase/seed-1-portugues-sus.sql` — textos + 60 Português + 60 SUS
-3. `supabase/seed-2-tecnico.sql` — 208 questões do Técnico
-4. `supabase/seed-3-enfermeiro.sql` — 182 questões do Enfermeiro
-5. `supabase/seguranca.sql` — reforço de segurança: gabarito oculto, correção no servidor e limites anti-abuso
+2. `supabase/carga/parte-01.sql` até a última parte, em ordem — textos + 1.500 questões (200 Português, 200 SUS, 546 Técnico, 554 Enfermeiro)
+3. `supabase/seguranca.sql` — reforço de segurança: gabarito oculto, correção no servidor e limites anti-abuso
 
 ## 2.1 CAPTCHA no login e no cadastro (opcional, recomendado)
 
@@ -80,10 +78,16 @@ Saia e entre de novo no site: vai aparecer o botão **Administração** com trê
 
 ## Acrescentar questões pelos arquivos (opcional)
 
-Também dá para editar os arquivos em `banco/` (sempre acrescentando no **final** das listas) e gerar os SQL de novo:
+Também dá para editar os arquivos em `banco/` (sempre acrescentando no **final** das listas ou em arquivos novos no final da lista de `supabase/gera-seed.js` e do `index.html`) e gerar os SQL de novo:
 
 ```
 node supabase/gera-seed.js
 ```
 
-Rodar os arquivos `seed-*.sql` de novo atualiza as questões existentes e insere as novas, sem apagar o histórico dos alunos.
+Rodar as partes de `supabase/carga/` de novo atualiza as questões existentes e insere as novas, sem apagar o histórico dos alunos. Para carregar apenas as questões acrescentadas, use a opção `--desde` com a quantidade que já existia em cada área, por exemplo:
+
+```
+node supabase/gera-seed.js --desde pt=60,sus=60,tec=208,enf=182
+```
+
+Os arquivos ficam em `supabase/carga-novas/`.
