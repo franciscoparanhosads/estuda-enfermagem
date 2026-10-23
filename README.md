@@ -1,6 +1,6 @@
 # Estuda Enfermagem — Simulados para Concurso
 
-Plataforma web de simulados para o concurso da Prefeitura de Volta Redonda/RJ (Edital nº 003/2026-SMA, banca FEVRE), cargos **Técnico em Enfermagem** e **Enfermeiro**.
+Plataforma web de simulados para concurso, cargos **Técnico em Enfermagem** e **Enfermeiro**.
 
 **🔗 Acesse: [estudaenfermagem.netlify.app](https://estudaenfermagem.netlify.app)**
 
