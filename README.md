@@ -45,6 +45,10 @@ Todas as questões têm 5 alternativas e comentário explicando o gabarito.
 
 O site em produção passou por **46 testes**: segurança sem login, segurança com login, correção no servidor, funções de administrador e o fluxo completo do aluno. Todos foram aprovados. Veja o [relatório de testes](testes/RELATORIO-DE-TESTES.md).
 
+## Próximas atualizações
+
+Serviço de e-mail próprio, CAPTCHA em produção, e-mails em português e mais. Veja o [ROADMAP](ROADMAP.md).
+
 ## Estrutura
 
 ```
