@@ -4,7 +4,7 @@ Histórico das versões do Estuda Enfermagem, da mais recente para a mais antiga
 
 ---
 
-## Versão 2.0 — 23/10/2026
+## Versão 1.3 — 23/10/2026
 
 ### Banco de questões ampliado para 1.500
 
