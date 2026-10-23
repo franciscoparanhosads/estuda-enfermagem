@@ -38,6 +38,9 @@ button:disabled{opacity:.45;cursor:default}
 .badge.off{background:var(--badbg);color:var(--bad)}
 .texto{background:var(--bg);border-left:3px solid var(--pri);padding:10px 12px;border-radius:6px;font-size:.95rem;margin-bottom:12px;white-space:pre-line}
 .enun{white-space:pre-line}
+.pag{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 0}
+.pag button{min-width:42px;padding:8px 6px;font-weight:600}
+.pag span{font-size:.88rem;color:var(--mut);padding:0 4px;white-space:nowrap}
 .opt{display:flex;gap:10px;width:100%;text-align:left;margin-top:8px;align-items:flex-start;border:1px solid var(--bd);border-radius:10px;padding:10px 12px;background:var(--card)}
 .opt b{flex:0 0 26px;height:26px;border-radius:50%;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:.85rem}
 .opt.on{border-color:var(--pri);background:var(--sel)}.opt.on b{background:var(--pri);color:var(--prifg);border-color:var(--pri)}
@@ -232,8 +235,18 @@ const OnlineAPI = {
   async deleteQuestion(id) { ok(await sb.rpc('admin_excluir_questao', { p_id: id })); },
   async saveTexto(id, conteudo) { ok(await sb.from('textos').upsert({ id, conteudo })); },
   async alunos() {
-    const perfis = ok(await sb.from('perfis').select('id,nome'));
-    const tent = ok(await sb.from('tentativas').select('user_id,cargo,modo,acertos,total,aprovado,criada_em').order('criada_em'));
+    // A API devolve no máximo 1.000 linhas por chamada; busca em páginas
+    const tudo = async consulta => {
+      const out = [];
+      for (let de = 0; ; de += 1000) {
+        const page = ok(await consulta().range(de, de + 999));
+        out.push(...page);
+        if (page.length < 1000) break;
+      }
+      return out;
+    };
+    const perfis = await tudo(() => sb.from('perfis').select('id,nome').order('id'));
+    const tent = await tudo(() => sb.from('tentativas').select('user_id,cargo,modo,acertos,total,aprovado,criada_em').order('criada_em').order('id'));
     return { perfis, tent };
   }
 };
@@ -525,11 +538,27 @@ function vAdmin() {
   ({ q: admQuestoes, t: admTextos, a: admAlunos })[t]();
 }
 
+// Paginação das listas do painel de administração (« primeira ‹ anterior › próxima » última)
+const POR_PAGINA_Q = 50, POR_PAGINA_T = 10;
+function paginar(lista, porPagina, chave) {
+  const total = Math.max(1, Math.ceil(lista.length / porPagina));
+  const pagina = Math.min(Math.max(ui[chave] || 1, 1), total);
+  ui[chave] = pagina;
+  const ini = (pagina - 1) * porPagina;
+  const botao = (alvo, rotulo, titulo, desligado) => `<button type="button" data-pg="${alvo}" title="${titulo}" aria-label="${titulo}" ${desligado ? 'disabled' : ''}>${rotulo}</button>`;
+  const html = total < 2 ? '' : `<div class="pag">${botao(1, '«', 'Primeira página', pagina === 1)}${botao(pagina - 1, '‹', 'Página anterior', pagina === 1)}<span>Pág. ${pagina} de ${total}</span>${botao(pagina + 1, '›', 'Próxima página', pagina === total)}${botao(total, '»', 'Última página', pagina === total)}</div>`;
+  return { itens: lista.slice(ini, ini + porPagina), ini, html };
+}
+function ligarPaginacao(chave, redesenhar) {
+  $$('#adm [data-pg]').forEach(b => b.onclick = () => { ui[chave] = +b.dataset.pg; redesenhar(); $('#adm').scrollIntoView(); });
+}
+
 function admQuestoes() {
   const f = ui.filtro || { area: '', busca: '' };
   const termo = f.busca.trim().toLowerCase();
   const lista = BANK.filter(q => (!f.area || q.area === f.area) && (!termo || (q.id + ' ' + q.t + ' ' + q.o.join(' ')).toLowerCase().includes(termo)));
   const cont = a => BANK.filter(q => q.area === a && q.ativa).length;
+  const pg = paginar(lista, POR_PAGINA_Q, 'pagQ');
   $('#adm').innerHTML = `
   <div class="card">
     <p class="mut">Ativas: ${Object.entries(AREAS_DB).map(([k, v]) => `${v} ${cont(k)}`).join(' · ')}</p>
@@ -537,10 +566,13 @@ function admQuestoes() {
     <input id="fb" placeholder="Buscar por texto ou código" value="${esc(f.busca)}"></div>
     <button class="pri full" style="margin-top:10px" id="nova">+ Nova questão</button>
   </div>
-  <div class="card"><p class="mut">${lista.length} encontrada(s)${lista.length > 100 ? ' · mostrando 100' : ''}</p>
-    ${lista.slice(0, 100).map(q => `<button class="item" data-q="${esc(q.id)}"><span><b>${esc(q.id)}</b> ${q.ativa ? '' : '<span class="badge off">inativa</span>'}<br><span class="mut">${esc(q.t.slice(0, 140))}${q.t.length > 140 ? '…' : ''}</span></span><span>Editar</span></button>`).join('')}
+  <div class="card"><p class="mut">${lista.length} encontrada(s)${lista.length ? ` · mostrando ${pg.ini + 1} a ${pg.ini + pg.itens.length}` : ''}</p>
+    ${pg.html}
+    ${pg.itens.map(q => `<button class="item" data-q="${esc(q.id)}"><span><b>${esc(q.id)}</b> ${q.ativa ? '' : '<span class="badge off">inativa</span>'}<br><span class="mut">${esc(q.t.slice(0, 140))}${q.t.length > 140 ? '…' : ''}</span></span><span>Editar</span></button>`).join('')}
+    ${pg.html}
   </div>`;
-  const upd = () => { ui.filtro = { area: $('#fa').value, busca: $('#fb').value }; };
+  ligarPaginacao('pagQ', admQuestoes);
+  const upd = () => { ui.filtro = { area: $('#fa').value, busca: $('#fb').value }; ui.pagQ = 1; };
   $('#fa').onchange = () => { upd(); admQuestoes(); };
   $('#fb').onkeydown = e => { if (e.key === 'Enter') { upd(); admQuestoes(); } };
   $('#fb').onblur = () => { if ($('#fb').value !== f.busca) { upd(); admQuestoes(); } };
@@ -588,14 +620,18 @@ function vEditar() {
 
 function admTextos() {
   const ids = Object.keys(TXT).map(Number).sort((a, b) => a - b);
+  const pg = paginar(ids, POR_PAGINA_T, 'pagT');
   $('#adm').innerHTML = `
-  <div class="card"><button class="pri full" id="novo">+ Novo texto</button></div>
-  ${ids.map(id => `<div class="card"><b>Texto ${id}</b> <span class="mut">· ${BANK.filter(q => +q.txt === id).length} questão(ões)</span>
+  <div class="card"><button class="pri full" id="novo">+ Novo texto</button>
+    <p class="mut" style="margin:10px 0 0">${ids.length} texto(s)${ids.length ? ` · mostrando ${pg.ini + 1} a ${pg.ini + pg.itens.length}` : ''}</p>${pg.html}</div>
+  ${pg.itens.map(id => `<div class="card"><b>Texto ${id}</b> <span class="mut">· ${BANK.filter(q => +q.txt === id).length} questão(ões)</span>
     <textarea data-tx="${id}" style="margin-top:8px;min-height:140px">${esc(TXT[id])}</textarea>
-    <button style="margin-top:8px" data-sv="${id}">Salvar texto</button></div>`).join('')}`;
+    <button style="margin-top:8px" data-sv="${id}">Salvar texto</button></div>`).join('')}
+  ${pg.html ? `<div class="card">${pg.html}</div>` : ''}`;
+  ligarPaginacao('pagT', admTextos);
   $('#novo').onclick = async () => {
     const id = (ids.length ? Math.max(...ids) : 0) + 1;
-    try { await API.saveTexto(id, 'Escreva aqui o novo texto.'); await carregar(); admTextos(); }
+    try { await API.saveTexto(id, 'Escreva aqui o novo texto.'); await carregar(); ui.pagT = Infinity; admTextos(); }
     catch (e) { alert(traduz(e).message); }
   };
   $$('[data-sv]').forEach(b => b.onclick = async () => {
@@ -605,20 +641,36 @@ function admTextos() {
   });
 }
 
+const POR_PAGINA_A = 20;
 async function admAlunos() {
   $('#adm').innerHTML = '<div class="card">Carregando…</div>';
   try {
     const { perfis, tent } = await API.alunos();
-    const rows = perfis.map(p => {
+    ui.alunos = perfis.map(p => {
       const ts = tent.filter(t => t.user_id === p.id), comp = ts.filter(t => t.modo === 'completo');
       const media = ts.length ? Math.round(ts.reduce((s, t) => s + t.acertos / t.total, 0) / ts.length * 100) : null;
       return { nome: p.nome, n: ts.length, comp: comp.length, apr: comp.filter(t => t.aprovado).length, media, ult: ts.length ? ts[ts.length - 1].criada_em : null };
     }).sort((a, b) => (b.ult || '').localeCompare(a.ult || ''));
-    $('#adm').innerHTML = `<div class="card"><p class="mut">${perfis.length} aluno(s) cadastrado(s)</p><div class="tbl"><table>
-      <tr><th>Nome</th><th>Provas</th><th>Completos (aprov.)</th><th>Média</th><th>Último</th></tr>
-      ${rows.map(r => `<tr><td>${esc(r.nome)}</td><td>${r.n}</td><td>${r.comp} (${r.apr})</td><td>${r.media === null ? '–' : r.media + '%'}</td><td>${r.ult ? new Date(r.ult).toLocaleDateString('pt-BR') : '–'}</td></tr>`).join('')}
-    </table></div></div>`;
+    desenharAlunos();
   } catch (e) { $('#adm').innerHTML = `<div class="card err">${esc(traduz(e).message)}</div>`; }
+}
+function desenharAlunos() {
+  const termo = (ui.buscaAluno || '').trim().toLowerCase();
+  const lista = ui.alunos.filter(r => !termo || (r.nome || '').toLowerCase().includes(termo));
+  const pg = paginar(lista, POR_PAGINA_A, 'pagA');
+  $('#adm').innerHTML = `<div class="card">
+    <input id="ba" placeholder="Buscar aluno pelo nome" value="${esc(ui.buscaAluno || '')}">
+    <p class="mut" style="margin:10px 0 0">${ui.alunos.length} aluno(s) cadastrado(s)${termo ? ` · ${lista.length} encontrado(s)` : ''}${lista.length ? ` · mostrando ${pg.ini + 1} a ${pg.ini + pg.itens.length}` : ''}</p>
+    ${pg.html}
+    <div class="tbl"><table>
+      <tr><th>Nome</th><th>Provas</th><th>Completos (aprov.)</th><th>Média</th><th>Último</th></tr>
+      ${pg.itens.map(r => `<tr><td>${esc(r.nome)}</td><td>${r.n}</td><td>${r.comp} (${r.apr})</td><td>${r.media === null ? '–' : r.media + '%'}</td><td>${r.ult ? new Date(r.ult).toLocaleDateString('pt-BR') : '–'}</td></tr>`).join('')}
+    </table></div>
+    ${pg.html}</div>`;
+  ligarPaginacao('pagA', desenharAlunos);
+  const filtrar = () => { if ($('#ba').value !== (ui.buscaAluno || '')) { ui.buscaAluno = $('#ba').value; ui.pagA = 1; desenharAlunos(); } };
+  $('#ba').onkeydown = e => { if (e.key === 'Enter') filtrar(); };
+  $('#ba').onblur = filtrar;
 }
 
 // ======================= Início =======================
