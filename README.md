@@ -45,6 +45,10 @@ Todas as questões têm 5 alternativas e comentário explicando o gabarito. Alé
 
 O site em produção passou por **46 testes**: segurança sem login, segurança com login, correção no servidor, funções de administrador e o fluxo completo do aluno. Todos foram aprovados. Veja o [relatório de testes](testes/RELATORIO-DE-TESTES.md).
 
+## Notas de atualização
+
+O histórico de versões e o que mudou em cada uma estão nas [notas de atualização](NOTAS-DE-ATUALIZACAO.md).
+
 ## Próximas atualizações
 
 Serviço de e-mail próprio, CAPTCHA em produção, e-mails em português e mais. Veja o [ROADMAP](ROADMAP.md).
