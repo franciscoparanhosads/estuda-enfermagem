@@ -4,7 +4,7 @@ Plataforma web de simulados para concurso, cargos **Técnico em Enfermagem** e *
 
 **🔗 Acesse: [estudaenfermagem.netlify.app](https://estudaenfermagem.netlify.app)**
 
-> Projeto independente de estudo, sem vínculo com a prefeitura ou com a banca organizadora.
+> Projeto independente de estudo.
 
 ## Funcionalidades
 
